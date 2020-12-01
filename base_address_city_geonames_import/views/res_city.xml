@@ -5,6 +5,9 @@
         <field name="model">res.city</field>
         <field name="inherit_id" ref="base_address_city.view_city_filter"/>
         <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="zipcode" string="Zip (starts with)" filter_domain="[('zipcode', '=ilike', self + '%')]"/>
+            </field>
             <field name="country_id" position="after">
                 <filter name="country_groupby" string="Country" context="{'group_by': 'country_id'}"/>
                 <filter name="state_groupby" string="State" context="{'group_by': 'state_id'}"/>
