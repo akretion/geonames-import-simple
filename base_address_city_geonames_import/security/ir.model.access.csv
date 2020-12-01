@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_res_city_geonames_import,Full access on res.city.geonames.import to Settings group,model_res_city_geonames_import,base.group_system,1,1,1,1
