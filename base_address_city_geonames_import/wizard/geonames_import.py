@@ -13,6 +13,7 @@ import logging
 import os
 import tempfile
 import zipfile
+import re
 
 import requests
 
@@ -58,6 +59,23 @@ class ResCityGeonamesImport(models.TransientModel):
     @api.model
     def prepare_city(self, rowdict, country, state_id, letter_case):
         city_name = rowdict['city_name']
+        # France specific fixes
+        if country["code"] in [
+                'FR', 'RE', 'GP', 'MQ', 'GF', 'YT', 'BL', 'MF', 'PM',
+                'PF', 'NC', 'WF', 'MC', 'AD']:
+            # Do not put the number of the arrondissement in the city name
+            if re.match(r'Paris \d{2}$', city_name):
+                city_name = 'Paris'
+            elif re.match(r'Marseille \d{2}$', city_name):
+                city_name = 'Marseille'
+            elif re.match(r'Lyon \d{2}$', city_name):
+                city_name = 'Lyon'
+            # Move CEDEX from zip to city field
+            if ' CEDEX' in rowdict['zip']:
+                position = rowdict['zip'].rfind(' CEDEX')
+                city_name = '%s%s' % (city_name, rowdict['zip'][position:])
+                rowdict['zip'] = rowdict['zip'][:position]
+            # END of France-specific fixes
         if letter_case == "title":
             city_name = city_name.title()
         elif letter_case == "upper":
@@ -168,6 +186,7 @@ class ResCityGeonamesImport(models.TransientModel):
             parsed_csv = self.get_and_parse_csv(country_dict)
             self._process_csv(parsed_csv, country_dict)
         action = self.env.ref('base_address_city.action_res_city_tree').read()[0]
+        action['domain'] = [('country_id', 'in', self.country_ids.ids)]
         return action
 
     def _process_csv(self, parsed_csv, country):
