@@ -7,8 +7,8 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
 {
-    "name": "Base Location Geonames Import",
-    "version": "13.0.2.0.0",
+    "name": "Base Address City Geonames Import",
+    "version": "14.0.1.0.0",
     "category": "Partner Management",
     "license": "AGPL-3",
     "summary": "Import zip entries from Geonames",
@@ -20,10 +20,12 @@
         "Odoo Community Association (OCA)"
     ),
     "website": "https://github.com/OCA/partner-contact",
-    "depends": ["base_location"],
+    "depends": ["base_address_city"],
     "data": [
+        "security/ir.model.access.csv",
         "data/res_country_data.xml",
-        "views/res_country_view.xml",
+        "views/res_country.xml",
+        "views/res_city.xml",
         "wizard/geonames_import_view.xml",
     ],
     "installable": True,
