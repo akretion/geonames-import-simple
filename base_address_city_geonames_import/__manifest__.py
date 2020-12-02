@@ -20,7 +20,7 @@
         "Odoo Community Association (OCA)"
     ),
     "website": "https://github.com/akretion/geonames-import-simple",
-    "depends": ["base_address_city"],
+    "depends": ["base_address_city", "contacts"],
     "data": [
         "security/ir.model.access.csv",
         "data/res_country_data.xml",
