@@ -5,13 +5,13 @@
 from odoo.tests import common
 
 
-class TestBaseLocationGeonamesImport(common.SavepointCase):
+class TestBaseLocationGeonamesImport(common.TransactionCase):
 
     def test_import_country(self):
         country = self.env.ref('base.mc')
         # Create dumb res.city, to see if it's deleted
         city_to_del = self.env['res.city'].create({
-            'name': 'Test base_address_city_geonames_import',
+            'name': 'Test base_address_extended_geonames_import',
             'zipcode': 'ZZ9988YYXX',
             'country_id': country.id})
         city_to_del_id = city_to_del.id

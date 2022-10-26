@@ -7,7 +7,7 @@ Base Address City Geonames Import
     :alt: License: AGPL-3
 
 This module adds a wizard to import cities and/or city zip entries from
-`Geonames <http://www.geonames.org/>`_ database. It is an alternative to the OCA module **base_location_geonames_import** from the OCA project `partner-contact <geonames-import-simple>`_. The main advantage of the module **base_address_city_geonames_import** is that it doesn't depend on the module *base_location* which adds an unnecessary object *res.city.zip* (that object is not necessary, the *res.city* object from the module *base_address_city* is enough).
+`Geonames <http://www.geonames.org/>`_ database. It is an alternative to the OCA module **base_location_geonames_import** from the OCA project `partner-contact <geonames-import-simple>`_. The main advantage of the module **base_address_extended_geonames_import** is that it doesn't depend on the module *base_location* which adds an unnecessary object *res.city.zip* (that object is not necessary, the *res.city* object from the module *base_address_extended* is enough).
 
 Configuration
 =============
@@ -38,7 +38,7 @@ Bug Tracker
 Bugs are tracked on `GitHub Issues <https://github.com/akretion/geonames-import-simple/issues>`_.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us smashing it by providing a detailed and welcomed
-`feedback <https://github.com/akretion/geonames-import-simple/issues/new?body=module:%20base_address_city_geonames_import%0Aversion:%2014.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
+`feedback <https://github.com/akretion/geonames-import-simple/issues/new?body=module:%20base_address_extended_geonames_import%0Aversion:%2014.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
 
 Do not contact contributors directly about support or help with technical issues.
 

@@ -185,7 +185,7 @@ class ResCityGeonamesImport(models.TransientModel):
                 }
             parsed_csv = self.get_and_parse_csv(country_dict)
             self._process_csv(parsed_csv, country_dict)
-        action = self.env.ref('base_address_city.action_res_city_tree').read()[0]
+        action = self.env.ref('base_address_extended.action_res_city_tree').read()[0]
         action['domain'] = [('country_id', 'in', self.country_ids.ids)]
         return action
 
