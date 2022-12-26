@@ -5,15 +5,13 @@
         <field name="model">res.city.geonames.import</field>
         <field name="arch" type="xml">
             <form string="Import from Geonames">
-                <group name="help">
-                    <div>
-                        <p
-                        >For the selected country, this wizard will download the latest version of the list of cities from <a
-                                href="http://www.geonames.org/"
-                            >geonames.org</a>, create new location entries if not found already in the system, and <b
-                            >delete missing entries</b> from new file.</p>
-                    </div>
-                </group>
+                <div>
+                    <p
+                    >For the selected country, this wizard will download the latest version of the list of cities from <a
+                            href="http://www.geonames.org/" target="_blank"
+                        >geonames.org</a>, create new location entries if not found already in the system, and <b
+                        >delete missing entries</b> from new file.</p>
+                </div>
                 <group name="main">
                     <field
                         name="country_ids"
