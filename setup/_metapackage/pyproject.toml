@@ -1,0 +1,11 @@
+[project]
+name = "odoo-addons-akretion-geonames-import-simple"
+version = "18.0.20260223.0"
+dependencies = [
+    "odoo-addon-base_address_extended_geonames_import==18.0.*",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 18.0",
+]
