@@ -15,10 +15,4 @@
         </field>
     </record>
 
-    <menuitem
-        id="res_city_menu"
-        parent="contacts.menu_localisation"
-        action="base_address_extended.action_res_city_tree"
-        sequence="4" />
-
 </odoo>
