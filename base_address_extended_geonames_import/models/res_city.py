@@ -9,14 +9,9 @@ class ResCity(models.Model):
     _inherit = "res.city"
 
     @api.model
-    def name_search(
-            self, name='', args=None, operator='ilike', limit=80):
-        if args is None:
-            args = []
-        if name and operator == 'ilike':
-            recs = self.search(
-                [('zipcode', '=', name)] + args, limit=limit)
-            if recs:
-                return recs.name_get()
-        return super().name_search(
-            name=name, args=args, operator=operator, limit=limit)
+    def _search_display_name(self, operator, value):
+        if operator == "ilike" and value and isinstance(value, str) and value.isdigit():
+            domain = [('zipcode', '=like', value + '%')]
+        else:
+            domain = super()._search_display_name(operator, value)
+        return domain
