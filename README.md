@@ -17,7 +17,11 @@ Alternative implementation to the OCA module base_location_geonames_import using
 
 [//]: # (addons)
 
-This part will be replaced when running the oca-gen-addons-table script from OCA/maintainer-tools.
+Available addons
+----------------
+addon | version | maintainers | summary
+--- | --- | --- | ---
+[base_address_extended_geonames_import](base_address_extended_geonames_import/) | 18.0.1.0.0 |  | Import zip entries from Geonames
 
 [//]: # (end addons)
 
