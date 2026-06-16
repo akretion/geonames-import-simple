@@ -2,11 +2,13 @@
 # Copyright 2020 Manuel Regidor <manuel.regidor@sygel.es>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl.html).
 
+from odoo import Command
 from odoo.tests import common
 
 
 class TestBaseLocationGeonamesImport(common.TransactionCase):
     def test_import_country(self):
+        # TODO hitting error 'Blocking un-mocked external HTTP request'
         country = self.env.ref("base.mc")
         # Create dumb res.city, to see if it's deleted
         city_to_del = self.env["res.city"].create(
@@ -18,7 +20,7 @@ class TestBaseLocationGeonamesImport(common.TransactionCase):
         )
         city_to_del_id = city_to_del.id
         wiz = self.env["res.city.geonames.import"].create(
-            {"country_ids": [(6, 0, [country.id])]}
+            {"country_ids": [Command.set([country.id])]}
         )
         wiz.run_import()
         # Test deletion
