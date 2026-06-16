@@ -11,7 +11,7 @@ class ResCity(models.Model):
     @api.model
     def _search_display_name(self, operator, value):
         if operator == "ilike" and value and isinstance(value, str) and value.isdigit():
-            domain = [('zipcode', '=like', value + '%')]
+            domain = [("zipcode", "=like", value + "%")]
         else:
             domain = super()._search_display_name(operator, value)
         return domain

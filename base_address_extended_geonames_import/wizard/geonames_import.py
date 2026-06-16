@@ -11,16 +11,17 @@ import csv
 import io
 import logging
 import os
+import re
 import tempfile
 import zipfile
-import re
 
 import requests
 
-from odoo import _, api, fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 logger = logging.getLogger(__name__)
+TIMEOUT = 30
 
 
 class ResCityGeonamesImport(models.TransientModel):
@@ -31,7 +32,6 @@ class ResCityGeonamesImport(models.TransientModel):
 
     letter_case = fields.Selection(
         [("unchanged", "Unchanged"), ("title", "Title Case"), ("upper", "Upper Case")],
-        string="Letter Case",
         default="unchanged",
         help="Converts retreived city and state names to Title Case "
         "(upper case on each first letter of a word) or Upper Case "
@@ -41,40 +41,53 @@ class ResCityGeonamesImport(models.TransientModel):
 
     def row2rowdict(self, row, country):
         return {
-            'state_name': row[country["geonames_state_name_column"] or 3],
-            'state_code': row[country["geonames_state_code_column"] or 4],
-            'country_code': row[0],
-            'city_name': row[2],
-            'zip': row[1],
-            }
+            "state_name": row[country["geonames_state_name_column"] or 3],
+            "state_code": row[country["geonames_state_code_column"] or 4],
+            "country_code": row[0],
+            "city_name": row[2],
+            "zip": row[1],
+        }
 
     @api.model
     def prepare_state(self, rowdict, country):
         return {
-            "name": rowdict['state_name'],
-            "code": rowdict['state_code'],
+            "name": rowdict["state_name"],
+            "code": rowdict["state_code"],
             "country_id": country["id"],
         }
 
     @api.model
     def prepare_city(self, rowdict, country, state_id, letter_case):
-        city_name = rowdict['city_name']
+        city_name = rowdict["city_name"]
         # France specific fixes
         if country["code"] in [
-                'FR', 'RE', 'GP', 'MQ', 'GF', 'YT', 'BL', 'MF', 'PM',
-                'PF', 'NC', 'WF', 'MC', 'AD']:
+            "FR",
+            "RE",
+            "GP",
+            "MQ",
+            "GF",
+            "YT",
+            "BL",
+            "MF",
+            "PM",
+            "PF",
+            "NC",
+            "WF",
+            "MC",
+            "AD",
+        ]:
             # Do not put the number of the arrondissement in the city name
-            if re.match(r'Paris \d{2}$', city_name):
-                city_name = 'Paris'
-            elif re.match(r'Marseille \d{2}$', city_name):
-                city_name = 'Marseille'
-            elif re.match(r'Lyon \d{2}$', city_name):
-                city_name = 'Lyon'
+            if re.match(r"Paris \d{2}$", city_name):
+                city_name = "Paris"
+            elif re.match(r"Marseille \d{2}$", city_name):
+                city_name = "Marseille"
+            elif re.match(r"Lyon \d{2}$", city_name):
+                city_name = "Lyon"
             # Move CEDEX from zip to city field
-            if ' CEDEX' in rowdict['zip']:
-                position = rowdict['zip'].rfind(' CEDEX')
-                city_name = '%s%s' % (city_name, rowdict['zip'][position:])
-                rowdict['zip'] = rowdict['zip'][:position]
+            if " CEDEX" in rowdict["zip"]:
+                position = rowdict["zip"].rfind(" CEDEX")
+                city_name = f"{city_name}{rowdict['zip'][position:]}"
+                rowdict["zip"] = rowdict["zip"][:position]
             # END of France-specific fixes
         if letter_case == "title":
             city_name = city_name.title()
@@ -90,26 +103,28 @@ class ResCityGeonamesImport(models.TransientModel):
 
     @api.model
     def get_and_parse_csv(self, country):
-        country_code = country['code']
+        country_code = country["code"]
         config_url = self.env["ir.config_parameter"].get_param(
             "geonames.url", default="http://download.geonames.org/export/zip/%s.zip"
         )
         url = config_url % country_code
-        logger.info("Starting to download %s" % url)
-        res_request = requests.get(url)
+        logger.info("Starting to download %s", url)
+        res_request = requests.get(url, timeout=TIMEOUT)
         if res_request.status_code != requests.codes.ok:
             raise UserError(
-                _("Got an error %d when trying to download the file %s.")
-                % (res_request.status_code, url)
+                self.env._(
+                    "Got an error %(error)s when trying to download "
+                    "the file %(url)s.",
+                    error=res_request.status_code,
+                    url=url,
+                )
             )
 
         f_geonames = zipfile.ZipFile(io.BytesIO(res_request.content))
         tempdir = tempfile.mkdtemp(prefix="odoo")
-        f_geonames.extract("%s.txt" % country_code, tempdir)
+        f_geonames.extract(f"{country_code}.txt", tempdir)
 
-        data_file = open(
-            os.path.join(tempdir, "%s.txt" % country_code), "r", encoding="utf-8"
-        )
+        data_file = open(os.path.join(tempdir, f"{country_code}.txt"), encoding="utf-8")
         data_file.seek(0)
         reader = csv.reader(data_file, delimiter="	")
         parsed_csv = [row for i, row in enumerate(reader)]
@@ -121,45 +136,49 @@ class ResCityGeonamesImport(models.TransientModel):
         state_dict = {}
         state_model = self.env["res.country.state"]
         # for states, we only use the code to match
-        existing_states_read = state_model.search_read([
-            ('code', '!=', False),
-            ('country_id', '=', country["id"])], ['code'])
+        existing_states_read = state_model.search_read(
+            [("code", "!=", False), ("country_id", "=", country["id"])], ["code"]
+        )
         for state in existing_states_read:
-            state_dict[state['code']] = state['id']
+            state_dict[state["code"]] = state["id"]
         if self.create_states:
             for row in parsed_csv:
                 rowdict = self.row2rowdict(row, country)
-                state_code = rowdict.get('state_code')
+                state_code = rowdict.get("state_code")
                 if state_code and state_code not in state_dict:
                     state_vals = self.prepare_state(rowdict, country)
                     state = state_model.create(state_vals)
-                    state_dict[state_vals['code']] = state.id
+                    state_dict[state_vals["code"]] = state.id
         return state_dict
 
     def _create_cities(self, parsed_csv, state_dict, country):
-        city_model = self.env['res.city']
+        city_model = self.env["res.city"]
         letter_case = self.letter_case
         city_vals_list = []
         old_city_dict = {}  # key = (name, zip, state_id)
         new_city_dict = {}  # key = (name, zip, state_id)
-        cities_read = city_model.search_read([
-            ('zipcode', '!=', False),
-            ('country_id', '=', country["id"]),
-            ], ['name', 'zipcode', 'state_id', 'country_id'])
+        cities_read = city_model.search_read(
+            [
+                ("zipcode", "!=", False),
+                ("country_id", "=", country["id"]),
+            ],
+            ["name", "zipcode", "state_id", "country_id"],
+        )
         for city in cities_read:
             key = (
-                city['name'],
-                city['zipcode'],
-                city['state_id'] and city['state_id'][0] or False)
-            old_city_dict[key] = city['id']
+                city["name"],
+                city["zipcode"],
+                city["state_id"] and city["state_id"][0] or False,
+            )
+            old_city_dict[key] = city["id"]
         for row in parsed_csv:
             rowdict = self.row2rowdict(row, country)
             state_id = False
-            if rowdict['state_code']:
-                state_id = state_dict.get(rowdict['state_code'], False)
+            if rowdict["state_code"]:
+                state_id = state_dict.get(rowdict["state_code"], False)
             # First we transform, and THEN we compare
             city_vals = self.prepare_city(rowdict, country, state_id, letter_case)
-            key = (city_vals['name'], city_vals['zipcode'], state_id)
+            key = (city_vals["name"], city_vals["zipcode"], state_id)
             if key in old_city_dict:
                 new_city_dict[key] = old_city_dict[key]
             else:
@@ -169,30 +188,30 @@ class ResCityGeonamesImport(models.TransientModel):
         ctx.pop("lang", None)  # make sure no translation is added
         created_cities = city_model.with_context(ctx).create(city_vals_list)
         for i, vals in enumerate(city_vals_list):
-            key = (vals['name'], vals['zipcode'], vals['state_id'])
+            key = (vals["name"], vals["zipcode"], vals["state_id"])
             new_city_dict[key] = created_cities[i].id
         return new_city_dict
 
     def run_import(self):
         for country in self.country_ids:
             country_dict = {
-                'id': country.id,
-                'code': country.code,
-                'name': country.name,
-                'geonames_state_name_column': country.geonames_state_name_column,
-                'geonames_state_code_column': country.geonames_state_code_column,
-                'record': country,
-                }
+                "id": country.id,
+                "code": country.code,
+                "name": country.name,
+                "geonames_state_name_column": country.geonames_state_name_column,
+                "geonames_state_code_column": country.geonames_state_code_column,
+                "record": country,
+            }
             parsed_csv = self.get_and_parse_csv(country_dict)
             self._process_csv(parsed_csv, country_dict)
-        action = self.env.ref('base_address_extended.action_res_city_tree').read()[0]
-        action['domain'] = [('country_id', 'in', self.country_ids.ids)]
+        action = self.env.ref("base_address_extended.action_res_city_tree").read()[0]
+        action["domain"] = [("country_id", "in", self.country_ids.ids)]
         return action
 
     def _process_csv(self, parsed_csv, country):
         city_model = self.env["res.city"]
         # Store current record list
-        old_cities = set(city_model.search([("country_id", "=", country['id'])]).ids)
+        old_cities = set(city_model.search([("country_id", "=", country["id"])]).ids)
         logger.info("Starting to create the cities and/or city zip entries")
         # Pre-create states and cities
         state_dict = self._create_states(parsed_csv, country)
@@ -203,8 +222,8 @@ class ResCityGeonamesImport(models.TransientModel):
             city_model.browse(list(old_cities)).unlink()
             logger.info(
                 "%d res.city entries deleted for country %s"
-                % (len(old_cities), country['name'])
-                )
+                % (len(old_cities), country["name"])
+            )
         logger.info(
             "The wizard to create cities and/or city zip entries from "
             "geonames has been successfully completed."
